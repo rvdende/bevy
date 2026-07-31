@@ -15,8 +15,9 @@ use bevy_ecs::{
     prelude::{Has, ReflectComponent},
     reflect::ReflectResource,
     resource::Resource,
+    bundle::InsertMode,
     schedule::IntoScheduleConfigs,
-    system::{Commands, Query, Res, ResMut},
+    system::{entity_command, Commands, Query, Res, ResMut},
 };
 use bevy_input::{prelude::KeyCode, ButtonInput};
 use bevy_log::info;
@@ -280,7 +281,17 @@ pub fn update_overlay(
 
     for (entity, existing_config, ..) in &cameras {
         if existing_config.is_none() || (changed && Some(&config_comp) != existing_config) {
-            commands.entity(entity).insert(config_comp.clone());
+            // Silenced, not a plain `insert`: this is a deferred command against an entity
+            // that was alive when the query ran, and a camera can be despawned later in the
+            // same frame -- an app that rebuilds a render camera when its settings change
+            // does exactly that. Panicking the whole app because a debug overlay could not
+            // be attached to a camera that no longer exists is the wrong trade.
+            commands
+                .entity(entity)
+                .queue_silenced(entity_command::insert(
+                    config_comp.clone(),
+                    InsertMode::Replace,
+                ));
         }
     }
 }
