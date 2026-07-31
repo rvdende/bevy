@@ -66,6 +66,40 @@ impl RawVulkanInitSettings {
     ) {
         self.create_device_callbacks.push(Arc::new(callback));
     }
+
+    /// Runs every registered create-instance callback against `args`.
+    ///
+    /// [`create_raw_vulkan_instance`] is the usual way these are invoked, but it owns the
+    /// whole creation flow. Something that must own that flow itself -- an OpenXR integration,
+    /// which is required to create its Vulkan instance through `xrCreateVulkanInstanceKHR` --
+    /// can build the arguments and call this instead, then pass the extensions the callbacks
+    /// asked for on to whatever does the creating. Without it, the callback list is
+    /// unreachable (it is private, and must stay so: registering one is `unsafe`) and anything
+    /// depending on it, such as DLSS's NGX extensions, is silently dropped.
+    pub fn apply_create_instance_callbacks(
+        &self,
+        args: &mut wgpu::hal::vulkan::CreateInstanceCallbackArgs,
+        additional_features: &mut AdditionalVulkanFeatures,
+    ) {
+        for callback in &self.create_instance_callbacks {
+            (callback)(args, additional_features);
+        }
+    }
+
+    /// Runs every registered create-device callback against `args`.
+    ///
+    /// The device-creation counterpart of [`Self::apply_create_instance_callbacks`] -- see
+    /// there for why this exists.
+    pub fn apply_create_device_callbacks(
+        &self,
+        args: &mut wgpu::hal::vulkan::CreateDeviceCallbackArgs,
+        adapter: &wgpu::hal::vulkan::Adapter,
+        additional_features: &mut AdditionalVulkanFeatures,
+    ) {
+        for callback in &self.create_device_callbacks {
+            (callback)(args, adapter, additional_features);
+        }
+    }
 }
 
 /// Creates a [`wgpu::Instance`] with `settings`'s registered
