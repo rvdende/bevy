@@ -68,7 +68,17 @@ impl RawVulkanInitSettings {
     }
 }
 
-pub(crate) fn create_raw_vulkan_instance(
+/// Creates a [`wgpu::Instance`] with `settings`'s registered
+/// [`RawVulkanInitSettings::add_create_instance_callback`] callbacks applied, and records what
+/// they turned on into `additional_features`.
+///
+/// `pub`, not `pub(crate)`: an app that builds its own Vulkan instance instead of using
+/// [`RenderCreation::Automatic`](crate::settings::RenderCreation::Automatic) -- an XR runtime
+/// integration, say, which must drive Vulkan instance/device creation itself to satisfy its
+/// own API's requirements -- has otherwise had no way to consult `RawVulkanInitSettings` at
+/// all: the callback list is a private field only this module's own automatic device-creation
+/// path could read. This is that same path, exposed for reuse.
+pub fn create_raw_vulkan_instance(
     instance_descriptor: InstanceDescriptor,
     settings: &RawVulkanInitSettings,
     additional_features: &mut AdditionalVulkanFeatures,
@@ -97,7 +107,9 @@ pub(crate) fn create_raw_vulkan_instance(
     }
 }
 
-pub(crate) async fn create_raw_device(
+/// The device-creation counterpart of [`create_raw_vulkan_instance`] -- see its own doc for
+/// why this is `pub`.
+pub async fn create_raw_device(
     adapter: &Adapter,
     device_descriptor: &DeviceDescriptor<'_>,
     settings: &RawVulkanInitSettings,
@@ -125,7 +137,7 @@ pub(crate) async fn create_raw_device(
 }
 
 #[derive(Error, Debug)]
-pub(crate) enum CreateRawVulkanDeviceError {
+pub enum CreateRawVulkanDeviceError {
     #[error(transparent)]
     RequestDeviceError(#[from] wgpu::RequestDeviceError),
     #[error(transparent)]
