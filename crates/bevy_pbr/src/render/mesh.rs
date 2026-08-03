@@ -3570,7 +3570,21 @@ impl SpecializedMeshPipeline for MeshPipeline {
         #[cfg(all(feature = "webgl", target_arch = "wasm32", not(feature = "webgpu")))]
         shader_defs.push("WEBGL2".into());
 
-        #[cfg(feature = "experimental_pbr_pcss")]
+        // Not on the web, on either backend. PCSS samples the shadow map through a *linear*
+        // sampler, and both browser backends reject that outright: a depth texture may only be
+        // paired with a non-filtering or comparison sampler, so WebGPU fails pipeline creation
+        // with
+        //
+        //     Texture binding (group:0, binding:5) is TextureSampleType::Depth but used
+        //     statically with a sampler (group:0, binding:7) that's SamplerBindingType::Filtering
+        //
+        // and bevy quits the app over it. Linear filtering is the whole point of the blocker
+        // search, so there is nothing to trade away here -- the samplers simply do not exist on
+        // this target. WebGL 2 has the same problem and was already handled, but one step later,
+        // by the `WEBGL2` early-outs inside `shadow_sampling.wgsl`; withholding the def turns
+        // both blocker searches into their existing `return vec2(0.0)` path instead, which is
+        // what those early-outs were doing by hand.
+        #[cfg(all(feature = "experimental_pbr_pcss", not(target_arch = "wasm32")))]
         shader_defs.push("PCSS_SAMPLERS_AVAILABLE".into());
 
         if key.contains(MeshPipelineKey::TONEMAP_IN_SHADER) {
