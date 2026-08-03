@@ -355,18 +355,27 @@ fn search_for_blockers_in_shadow_cubemap_hardware(
 
 #ifdef PCSS_SAMPLERS_AVAILABLE
 
+// `textureSampleLevel`, not `textureSample`, to match the directional blocker search above.
+// `textureSample` computes an implicit LOD from derivatives, and WGSL only permits that in
+// uniform control flow -- this function is called from inside a loop over lights, which is
+// not. Tint enforces the rule and rejects the whole module ("'textureSample' must only be
+// called from uniform control flow"), so on WebGPU every PBR pipeline failed to build and
+// the app quit the moment a shadow-casting mesh was drawn. Shadow maps have a single mip,
+// so an explicit level 0 samples exactly what the implicit LOD would have.
 #ifdef NO_CUBE_ARRAY_TEXTURES_SUPPORT
-    let sampled_depth = textureSample(
+    let sampled_depth = textureSampleLevel(
         view_bindings::point_shadow_textures,
         view_bindings::point_shadow_textures_linear_sampler,
         light_local,
+        0u,
     );
 #else
-    let sampled_depth = textureSample(
+    let sampled_depth = textureSampleLevel(
         view_bindings::point_shadow_textures,
         view_bindings::point_shadow_textures_linear_sampler,
         light_local,
         i32(light_id),
+        0u,
     );
 #endif
 
