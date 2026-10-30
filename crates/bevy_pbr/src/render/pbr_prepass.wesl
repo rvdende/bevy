@@ -98,28 +98,37 @@ fn fragment(
 @if(!MESHLET_MESH_MATERIAL_PASS)
         bias.mip_bias = view.mip_bias;
 
-@if(BINDLESS)
-        let texture = bindless_textures_2d[material_indices[slot].normal_map_texture];
-@else
-        let texture = pbr_bindings::normal_map_texture;
-@if(BINDLESS)
-        let sampler_ = bindless_samplers_filtering[material_indices[slot].normal_map_sampler];
-@else
-        let sampler_ = pbr_bindings::normal_map_sampler;
-@if(MESHLET_MESH_MATERIAL_PASS)
+@if(BINDLESS && MESHLET_MESH_MATERIAL_PASS)
         let Nt =
             textureSampleGrad(
-                texture,
-                sampler_,
+                bindless_textures_2d[material_indices[slot].normal_map_texture],
+                bindless_samplers_filtering[material_indices[slot].normal_map_sampler],
                 uv,
                 bias.ddx_uv,
                 bias.ddy_uv,
             ).rgb;
-@if(!MESHLET_MESH_MATERIAL_PASS)
+@if(!BINDLESS && MESHLET_MESH_MATERIAL_PASS)
+        let Nt =
+            textureSampleGrad(
+                pbr_bindings::normal_map_texture,
+                pbr_bindings::normal_map_sampler,
+                uv,
+                bias.ddx_uv,
+                bias.ddy_uv,
+            ).rgb;
+@if(BINDLESS && !MESHLET_MESH_MATERIAL_PASS)
         let Nt =
             textureSampleBias(
-                texture,
-                sampler_,
+                bindless_textures_2d[material_indices[slot].normal_map_texture],
+                bindless_samplers_filtering[material_indices[slot].normal_map_sampler],
+                uv,
+                bias.mip_bias,
+            ).rgb;
+@if(!BINDLESS && !MESHLET_MESH_MATERIAL_PASS)
+        let Nt =
+            textureSampleBias(
+                pbr_bindings::normal_map_texture,
+                pbr_bindings::normal_map_sampler,
                 uv,
                 bias.mip_bias,
             ).rgb;

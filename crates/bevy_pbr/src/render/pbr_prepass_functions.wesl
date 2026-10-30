@@ -68,17 +68,17 @@ fn prepass_sample_color_and_alpha_discard(in: VertexOutput) {
 
     uv = (uv_transform * vec3(uv, 1.0)).xy;
     if (flags & pbr_types::STANDARD_MATERIAL_FLAGS_BASE_COLOR_TEXTURE_BIT) != 0u {
-@if(BINDLESS)
-        let texture = bindless_textures_2d[material_indices[slot].base_color_texture];
-@else
-        let texture = pbr_bindings::base_color_texture;
-@if(BINDLESS)
-        let sampler_ = bindless_samplers_filtering[material_indices[slot].base_color_sampler];
-@else
-        let sampler_ = pbr_bindings::base_color_sampler;
+        @if(BINDLESS)
         output_color = output_color * textureSampleBias(
-            texture,
-            sampler_,
+            bindless_textures_2d[material_indices[slot].base_color_texture],
+            bindless_samplers_filtering[material_indices[slot].base_color_sampler],
+            uv,
+            view.mip_bias
+        );
+        @if(!BINDLESS)
+        output_color = output_color * textureSampleBias(
+            pbr_bindings::base_color_texture,
+            pbr_bindings::base_color_sampler,
             uv,
             view.mip_bias
         );

@@ -192,22 +192,18 @@ pbr_input.material.uv_transform = uv_transform;
 
 @if(VERTEX_UVS)
     if ((flags & pbr_types::STANDARD_MATERIAL_FLAGS_BASE_COLOR_TEXTURE_BIT) != 0u) {
-        @if(BINDLESS)
-        let texture = bindless_textures_2d[material_indices[slot].base_color_texture];
-        @else
-        let texture = pbr_bindings::base_color_texture;
-        @if(BINDLESS)
-        let sampler_ = bindless_samplers_filtering[material_indices[slot].base_color_sampler];
-        @else
-        let sampler_ = pbr_bindings::base_color_sampler;
         @if(STANDARD_MATERIAL_BASE_COLOR_UV_B)
         let coords = uv_b;
         @else
         let coords = uv;
-        @if(MESHLET_MESH_MATERIAL_PASS)
-        pbr_input.material.base_color *= textureSampleGrad(texture, sampler_, coords, bias.ddx_uv, bias.ddy_uv);
-        @else
-        pbr_input.material.base_color *= textureSampleBias(texture, sampler_, coords, bias.mip_bias);
+        @if(BINDLESS && MESHLET_MESH_MATERIAL_PASS)
+        pbr_input.material.base_color *= textureSampleGrad(bindless_textures_2d[material_indices[slot].base_color_texture], bindless_samplers_filtering[material_indices[slot].base_color_sampler], coords, bias.ddx_uv, bias.ddy_uv);
+        @if(!BINDLESS && MESHLET_MESH_MATERIAL_PASS)
+        pbr_input.material.base_color *= textureSampleGrad(pbr_bindings::base_color_texture, pbr_bindings::base_color_sampler, coords, bias.ddx_uv, bias.ddy_uv);
+        @if(BINDLESS && !MESHLET_MESH_MATERIAL_PASS)
+        pbr_input.material.base_color *= textureSampleBias(bindless_textures_2d[material_indices[slot].base_color_texture], bindless_samplers_filtering[material_indices[slot].base_color_sampler], coords, bias.mip_bias);
+        @if(!BINDLESS && !MESHLET_MESH_MATERIAL_PASS)
+        pbr_input.material.base_color *= textureSampleBias(pbr_bindings::base_color_texture, pbr_bindings::base_color_sampler, coords, bias.mip_bias);
 
 @if(ALPHA_TO_COVERAGE) {
     // Sharpen alpha edges.
@@ -257,22 +253,18 @@ pbr_input.material.uv_transform = uv_transform;
 
         // Specular texture
         if ((flags & pbr_types::STANDARD_MATERIAL_FLAGS_SPECULAR_TEXTURE_BIT) != 0u) {
-            @if(BINDLESS)
-            let texture = bindless_textures_2d[material_indices[slot].specular_texture];
-            @else
-            let texture = pbr_bindings::specular_texture;
-            @if(BINDLESS)
-            let sampler_ = bindless_samplers_filtering[material_indices[slot].specular_sampler];
-            @else
-            let sampler_ = pbr_bindings::specular_sampler;
             @if(STANDARD_MATERIAL_SPECULAR_UV_B)
             let coords = uv_b;
             @else
             let coords = uv;
-            @if(MESHLET_MESH_MATERIAL_PASS)
-            let specular = textureSampleGrad(texture, sampler_, coords, bias.ddx_uv, bias.ddy_uv).a;
-            @else
-            let specular = textureSampleBias(texture, sampler_, coords, bias.mip_bias).a;
+            @if(BINDLESS && MESHLET_MESH_MATERIAL_PASS)
+            let specular = textureSampleGrad(bindless_textures_2d[material_indices[slot].specular_texture], bindless_samplers_filtering[material_indices[slot].specular_sampler], coords, bias.ddx_uv, bias.ddy_uv).a;
+            @if(!BINDLESS && MESHLET_MESH_MATERIAL_PASS)
+            let specular = textureSampleGrad(pbr_bindings::specular_texture, pbr_bindings::specular_sampler, coords, bias.ddx_uv, bias.ddy_uv).a;
+            @if(BINDLESS && !MESHLET_MESH_MATERIAL_PASS)
+            let specular = textureSampleBias(bindless_textures_2d[material_indices[slot].specular_texture], bindless_samplers_filtering[material_indices[slot].specular_sampler], coords, bias.mip_bias).a;
+            @if(!BINDLESS && !MESHLET_MESH_MATERIAL_PASS)
+            let specular = textureSampleBias(pbr_bindings::specular_texture, pbr_bindings::specular_sampler, coords, bias.mip_bias).a;
             // This 0.5 factor is from the `KHR_materials_specular` specification:
             // <https://github.com/KhronosGroup/glTF/tree/main/extensions/2.0/Khronos/KHR_materials_specular#materials-with-reflectance-parameter>
             pbr_input.material.reflectance *= specular * 0.5;
@@ -280,22 +272,18 @@ pbr_input.material.uv_transform = uv_transform;
 
         // Specular tint texture
         if ((flags & pbr_types::STANDARD_MATERIAL_FLAGS_SPECULAR_TINT_TEXTURE_BIT) != 0u) {
-            @if(BINDLESS)
-            let texture = bindless_textures_2d[material_indices[slot].specular_tint_texture];
-            @else
-            let texture = pbr_bindings::specular_tint_texture;
-            @if(BINDLESS)
-            let sampler_ = bindless_samplers_filtering[material_indices[slot].specular_tint_sampler];
-            @else
-            let sampler_ = pbr_bindings::specular_tint_sampler;
             @if(STANDARD_MATERIAL_SPECULAR_TINT_UV_B)
             let coords = uv_b;
             @else
             let coords = uv;
-            @if(MESHLET_MESH_MATERIAL_PASS)
-            let specular_tint = textureSampleGrad(texture, sampler_, coords, bias.ddx_uv, bias.ddy_uv).rgb;
-            @else
-            let specular_tint = textureSampleBias(texture, sampler_, coords, bias.mip_bias).rgb;
+            @if(BINDLESS && MESHLET_MESH_MATERIAL_PASS)
+            let specular_tint = textureSampleGrad(bindless_textures_2d[material_indices[slot].specular_tint_texture], bindless_samplers_filtering[material_indices[slot].specular_tint_sampler], coords, bias.ddx_uv, bias.ddy_uv).rgb;
+            @if(!BINDLESS && MESHLET_MESH_MATERIAL_PASS)
+            let specular_tint = textureSampleGrad(pbr_bindings::specular_tint_texture, pbr_bindings::specular_tint_sampler, coords, bias.ddx_uv, bias.ddy_uv).rgb;
+            @if(BINDLESS && !MESHLET_MESH_MATERIAL_PASS)
+            let specular_tint = textureSampleBias(bindless_textures_2d[material_indices[slot].specular_tint_texture], bindless_samplers_filtering[material_indices[slot].specular_tint_sampler], coords, bias.mip_bias).rgb;
+            @if(!BINDLESS && !MESHLET_MESH_MATERIAL_PASS)
+            let specular_tint = textureSampleBias(pbr_bindings::specular_tint_texture, pbr_bindings::specular_tint_sampler, coords, bias.mip_bias).rgb;
             pbr_input.material.reflectance *= specular_tint;
         }
 
@@ -309,22 +297,18 @@ pbr_input.material.uv_transform = uv_transform;
 
 @if(VERTEX_UVS)
         if ((flags & pbr_types::STANDARD_MATERIAL_FLAGS_EMISSIVE_TEXTURE_BIT) != 0u) {
-            @if(BINDLESS)
-            let texture = bindless_textures_2d[material_indices[slot].emissive_texture];
-            @else
-            let texture = pbr_bindings::emissive_texture;
-            @if(BINDLESS)
-            let sampler_ = bindless_samplers_filtering[material_indices[slot].emissive_sampler];
-            @else
-            let sampler_ = pbr_bindings::emissive_sampler;
             @if(STANDARD_MATERIAL_EMISSIVE_UV_B)
             let coords = uv_b;
             @else
             let coords = uv;
-            @if(MESHLET_MESH_MATERIAL_PASS)
-            emissive = vec4<f32>(emissive.rgb * textureSampleGrad(texture, sampler_, coords, bias.ddx_uv, bias.ddy_uv).rgb, emissive.a);
-            @else
-            emissive = vec4<f32>(emissive.rgb * textureSampleBias(texture, sampler_, coords, bias.mip_bias).rgb, emissive.a);
+            @if(BINDLESS && MESHLET_MESH_MATERIAL_PASS)
+            emissive = vec4<f32>(emissive.rgb * textureSampleGrad(bindless_textures_2d[material_indices[slot].emissive_texture], bindless_samplers_filtering[material_indices[slot].emissive_sampler], coords, bias.ddx_uv, bias.ddy_uv).rgb, emissive.a);
+            @if(!BINDLESS && MESHLET_MESH_MATERIAL_PASS)
+            emissive = vec4<f32>(emissive.rgb * textureSampleGrad(pbr_bindings::emissive_texture, pbr_bindings::emissive_sampler, coords, bias.ddx_uv, bias.ddy_uv).rgb, emissive.a);
+            @if(BINDLESS && !MESHLET_MESH_MATERIAL_PASS)
+            emissive = vec4<f32>(emissive.rgb * textureSampleBias(bindless_textures_2d[material_indices[slot].emissive_texture], bindless_samplers_filtering[material_indices[slot].emissive_sampler], coords, bias.mip_bias).rgb, emissive.a);
+            @if(!BINDLESS && !MESHLET_MESH_MATERIAL_PASS)
+            emissive = vec4<f32>(emissive.rgb * textureSampleBias(pbr_bindings::emissive_texture, pbr_bindings::emissive_sampler, coords, bias.mip_bias).rgb, emissive.a);
         }
         pbr_input.material.emissive = emissive;
 
@@ -340,22 +324,18 @@ pbr_input.material.uv_transform = uv_transform;
 
 @if(VERTEX_UVS)
         if ((flags & pbr_types::STANDARD_MATERIAL_FLAGS_METALLIC_ROUGHNESS_TEXTURE_BIT) != 0u) {
-            @if(BINDLESS)
-            let texture = bindless_textures_2d[material_indices[slot].metallic_roughness_texture];
-            @else
-            let texture = pbr_bindings::metallic_roughness_texture;
-            @if(BINDLESS)
-            let sampler_ = bindless_samplers_filtering[material_indices[slot].metallic_roughness_sampler];
-            @else
-            let sampler_ = pbr_bindings::metallic_roughness_sampler;
             @if(STANDARD_MATERIAL_METALLIC_ROUGHNESS_UV_B)
             let coords = uv_b;
             @else
             let coords = uv;
-            @if(MESHLET_MESH_MATERIAL_PASS)
-            let metallic_roughness = textureSampleGrad(texture, sampler_, coords, bias.ddx_uv, bias.ddy_uv);
-            @else
-            let metallic_roughness = textureSampleBias(texture, sampler_, coords, bias.mip_bias);
+            @if(BINDLESS && MESHLET_MESH_MATERIAL_PASS)
+            let metallic_roughness = textureSampleGrad(bindless_textures_2d[material_indices[slot].metallic_roughness_texture], bindless_samplers_filtering[material_indices[slot].metallic_roughness_sampler], coords, bias.ddx_uv, bias.ddy_uv);
+            @if(!BINDLESS && MESHLET_MESH_MATERIAL_PASS)
+            let metallic_roughness = textureSampleGrad(pbr_bindings::metallic_roughness_texture, pbr_bindings::metallic_roughness_sampler, coords, bias.ddx_uv, bias.ddy_uv);
+            @if(BINDLESS && !MESHLET_MESH_MATERIAL_PASS)
+            let metallic_roughness = textureSampleBias(bindless_textures_2d[material_indices[slot].metallic_roughness_texture], bindless_samplers_filtering[material_indices[slot].metallic_roughness_sampler], coords, bias.mip_bias);
+            @if(!BINDLESS && !MESHLET_MESH_MATERIAL_PASS)
+            let metallic_roughness = textureSampleBias(pbr_bindings::metallic_roughness_texture, pbr_bindings::metallic_roughness_sampler, coords, bias.mip_bias);
             if ((flags & pbr_types::STANDARD_MATERIAL_FLAGS_METALLIC_ROUGHNESS_RG_BIT) != 0u) {
                 perceptual_roughness *= metallic_roughness.r;
                 metallic *= metallic_roughness.g;
@@ -377,22 +357,18 @@ pbr_input.material.uv_transform = uv_transform;
 
 @if(VERTEX_UVS && PBR_MULTI_LAYER_MATERIAL_TEXTURES_SUPPORTED)
         if ((flags & pbr_types::STANDARD_MATERIAL_FLAGS_CLEARCOAT_TEXTURE_BIT) != 0u) {
-            @if(BINDLESS)
-            let texture = bindless_textures_2d[material_indices[slot].clearcoat_texture];
-            @else
-            let texture = pbr_bindings::clearcoat_texture;
-            @if(BINDLESS)
-            let sampler_ = bindless_samplers_filtering[material_indices[slot].clearcoat_sampler];
-            @else
-            let sampler_ = pbr_bindings::clearcoat_sampler;
             @if(STANDARD_MATERIAL_CLEARCOAT_UV_B)
             let coords = uv_b;
             @else
             let coords = uv;
-            @if(MESHLET_MESH_MATERIAL_PASS)
-            pbr_input.material.clearcoat *= textureSampleGrad(texture, sampler_, coords, bias.ddx_uv, bias.ddy_uv).r;
-            @else
-            pbr_input.material.clearcoat *= textureSampleBias(texture, sampler_, coords, bias.mip_bias).r;
+            @if(BINDLESS && MESHLET_MESH_MATERIAL_PASS)
+            pbr_input.material.clearcoat *= textureSampleGrad(bindless_textures_2d[material_indices[slot].clearcoat_texture], bindless_samplers_filtering[material_indices[slot].clearcoat_sampler], coords, bias.ddx_uv, bias.ddy_uv).r;
+            @if(!BINDLESS && MESHLET_MESH_MATERIAL_PASS)
+            pbr_input.material.clearcoat *= textureSampleGrad(pbr_bindings::clearcoat_texture, pbr_bindings::clearcoat_sampler, coords, bias.ddx_uv, bias.ddy_uv).r;
+            @if(BINDLESS && !MESHLET_MESH_MATERIAL_PASS)
+            pbr_input.material.clearcoat *= textureSampleBias(bindless_textures_2d[material_indices[slot].clearcoat_texture], bindless_samplers_filtering[material_indices[slot].clearcoat_sampler], coords, bias.mip_bias).r;
+            @if(!BINDLESS && !MESHLET_MESH_MATERIAL_PASS)
+            pbr_input.material.clearcoat *= textureSampleBias(pbr_bindings::clearcoat_texture, pbr_bindings::clearcoat_sampler, coords, bias.mip_bias).r;
         }
 
         // Clearcoat roughness
@@ -405,22 +381,18 @@ pbr_input.material.uv_transform = uv_transform;
 
 @if(VERTEX_UVS && PBR_MULTI_LAYER_MATERIAL_TEXTURES_SUPPORTED)
         if ((flags & pbr_types::STANDARD_MATERIAL_FLAGS_CLEARCOAT_ROUGHNESS_TEXTURE_BIT) != 0u) {
-            @if(BINDLESS)
-            let texture = bindless_textures_2d[material_indices[slot].clearcoat_roughness_texture];
-            @else
-            let texture = pbr_bindings::clearcoat_roughness_texture;
-            @if(BINDLESS)
-            let sampler_ = bindless_samplers_filtering[material_indices[slot].clearcoat_roughness_sampler];
-            @else
-            let sampler_ = pbr_bindings::clearcoat_roughness_sampler;
             @if(STANDARD_MATERIAL_CLEARCOAT_ROUGHNESS_UV_B)
             let coords = uv_b;
             @else
             let coords = uv;
-            @if(MESHLET_MESH_MATERIAL_PASS)
-            pbr_input.material.clearcoat_perceptual_roughness *= textureSampleGrad(texture, sampler_, coords, bias.ddx_uv, bias.ddy_uv).g;
-            @else
-            pbr_input.material.clearcoat_perceptual_roughness *= textureSampleBias(texture, sampler_, coords, bias.mip_bias).g;
+            @if(BINDLESS && MESHLET_MESH_MATERIAL_PASS)
+            pbr_input.material.clearcoat_perceptual_roughness *= textureSampleGrad(bindless_textures_2d[material_indices[slot].clearcoat_roughness_texture], bindless_samplers_filtering[material_indices[slot].clearcoat_roughness_sampler], coords, bias.ddx_uv, bias.ddy_uv).g;
+            @if(!BINDLESS && MESHLET_MESH_MATERIAL_PASS)
+            pbr_input.material.clearcoat_perceptual_roughness *= textureSampleGrad(pbr_bindings::clearcoat_roughness_texture, pbr_bindings::clearcoat_roughness_sampler, coords, bias.ddx_uv, bias.ddy_uv).g;
+            @if(BINDLESS && !MESHLET_MESH_MATERIAL_PASS)
+            pbr_input.material.clearcoat_perceptual_roughness *= textureSampleBias(bindless_textures_2d[material_indices[slot].clearcoat_roughness_texture], bindless_samplers_filtering[material_indices[slot].clearcoat_roughness_sampler], coords, bias.mip_bias).g;
+            @if(!BINDLESS && !MESHLET_MESH_MATERIAL_PASS)
+            pbr_input.material.clearcoat_perceptual_roughness *= textureSampleBias(pbr_bindings::clearcoat_roughness_texture, pbr_bindings::clearcoat_roughness_sampler, coords, bias.mip_bias).g;
         }
 
 @if(BINDLESS)
@@ -431,26 +403,18 @@ pbr_input.material.uv_transform = uv_transform;
 
 @if(VERTEX_UVS && PBR_TRANSMISSION_TEXTURES_SUPPORTED)
         if ((flags & pbr_types::STANDARD_MATERIAL_FLAGS_SPECULAR_TRANSMISSION_TEXTURE_BIT) != 0u) {
-            @if(BINDLESS)
-            let texture = bindless_textures_2d[
-                material_indices[slot].specular_transmission_texture
-            ];
-            @else
-            let texture = pbr_bindings::specular_transmission_texture;
-            @if(BINDLESS)
-            let sampler_ = bindless_samplers_filtering[
-                material_indices[slot].specular_transmission_sampler
-            ];
-            @else
-            let sampler_ = pbr_bindings::specular_transmission_sampler;
             @if(STANDARD_MATERIAL_SPECULAR_TRANSMISSION_UV_B)
             let coords = uv_b;
             @else
             let coords = uv;
-            @if(MESHLET_MESH_MATERIAL_PASS)
-            specular_transmission *= textureSampleGrad(texture, sampler_, coords, bias.ddx_uv, bias.ddy_uv).r;
-            @else
-            specular_transmission *= textureSampleBias(texture, sampler_, coords, bias.mip_bias).r;
+            @if(BINDLESS && MESHLET_MESH_MATERIAL_PASS)
+            specular_transmission *= textureSampleGrad(bindless_textures_2d[material_indices[slot].specular_transmission_texture], bindless_samplers_filtering[material_indices[slot].specular_transmission_sampler], coords, bias.ddx_uv, bias.ddy_uv).r;
+            @if(!BINDLESS && MESHLET_MESH_MATERIAL_PASS)
+            specular_transmission *= textureSampleGrad(pbr_bindings::specular_transmission_texture, pbr_bindings::specular_transmission_sampler, coords, bias.ddx_uv, bias.ddy_uv).r;
+            @if(BINDLESS && !MESHLET_MESH_MATERIAL_PASS)
+            specular_transmission *= textureSampleBias(bindless_textures_2d[material_indices[slot].specular_transmission_texture], bindless_samplers_filtering[material_indices[slot].specular_transmission_sampler], coords, bias.mip_bias).r;
+            @if(!BINDLESS && !MESHLET_MESH_MATERIAL_PASS)
+            specular_transmission *= textureSampleBias(pbr_bindings::specular_transmission_texture, pbr_bindings::specular_transmission_sampler, coords, bias.mip_bias).r;
         }
         pbr_input.material.specular_transmission = specular_transmission;
 
@@ -461,22 +425,18 @@ pbr_input.material.uv_transform = uv_transform;
 
 @if(VERTEX_UVS && PBR_TRANSMISSION_TEXTURES_SUPPORTED)
         if ((flags & pbr_types::STANDARD_MATERIAL_FLAGS_THICKNESS_TEXTURE_BIT) != 0u) {
-            @if(BINDLESS)
-            let texture = bindless_textures_2d[material_indices[slot].thickness_texture];
-            @else
-            let texture = pbr_bindings::thickness_texture;
-            @if(BINDLESS)
-            let sampler_ = bindless_samplers_filtering[material_indices[slot].thickness_sampler];
-            @else
-            let sampler_ = pbr_bindings::thickness_sampler;
             @if(STANDARD_MATERIAL_THICKNESS_UV_B)
             let coords = uv_b;
             @else
             let coords = uv;
-            @if(MESHLET_MESH_MATERIAL_PASS)
-            thickness *= textureSampleGrad(texture, sampler_, coords, bias.ddx_uv, bias.ddy_uv).g;
-            @else
-            thickness *= textureSampleBias(texture, sampler_, coords, bias.mip_bias).g;
+            @if(BINDLESS && MESHLET_MESH_MATERIAL_PASS)
+            thickness *= textureSampleGrad(bindless_textures_2d[material_indices[slot].thickness_texture], bindless_samplers_filtering[material_indices[slot].thickness_sampler], coords, bias.ddx_uv, bias.ddy_uv).g;
+            @if(!BINDLESS && MESHLET_MESH_MATERIAL_PASS)
+            thickness *= textureSampleGrad(pbr_bindings::thickness_texture, pbr_bindings::thickness_sampler, coords, bias.ddx_uv, bias.ddy_uv).g;
+            @if(BINDLESS && !MESHLET_MESH_MATERIAL_PASS)
+            thickness *= textureSampleBias(bindless_textures_2d[material_indices[slot].thickness_texture], bindless_samplers_filtering[material_indices[slot].thickness_sampler], coords, bias.mip_bias).g;
+            @if(!BINDLESS && !MESHLET_MESH_MATERIAL_PASS)
+            thickness *= textureSampleBias(pbr_bindings::thickness_texture, pbr_bindings::thickness_sampler, coords, bias.mip_bias).g;
         }
         // scale thickness, accounting for non-uniform scaling (e.g. a “squished” mesh)
         // TODO: Meshlet support
@@ -494,22 +454,18 @@ pbr_input.material.uv_transform = uv_transform;
 
 @if(VERTEX_UVS && PBR_TRANSMISSION_TEXTURES_SUPPORTED)
         if ((flags & pbr_types::STANDARD_MATERIAL_FLAGS_DIFFUSE_TRANSMISSION_TEXTURE_BIT) != 0u) {
-            @if(BINDLESS)
-            let texture = bindless_textures_2d[material_indices[slot].diffuse_transmission_texture];
-            @else
-            let texture = pbr_bindings::diffuse_transmission_texture;
-            @if(BINDLESS)
-            let sampler_ = bindless_samplers_filtering[material_indices[slot].diffuse_transmission_sampler];
-            @else
-            let sampler_ = pbr_bindings::diffuse_transmission_sampler;
             @if(STANDARD_MATERIAL_DIFFUSE_TRANSMISSION_UV_B)
             let coords = uv_b;
             @else
             let coords = uv;
-            @if(MESHLET_MESH_MATERIAL_PASS)
-            diffuse_transmission *= textureSampleGrad(texture, sampler_, coords, bias.ddx_uv, bias.ddy_uv).a;
-            @else
-            diffuse_transmission *= textureSampleBias(texture, sampler_, coords, bias.mip_bias).a;
+            @if(BINDLESS && MESHLET_MESH_MATERIAL_PASS)
+            diffuse_transmission *= textureSampleGrad(bindless_textures_2d[material_indices[slot].diffuse_transmission_texture], bindless_samplers_filtering[material_indices[slot].diffuse_transmission_sampler], coords, bias.ddx_uv, bias.ddy_uv).a;
+            @if(!BINDLESS && MESHLET_MESH_MATERIAL_PASS)
+            diffuse_transmission *= textureSampleGrad(pbr_bindings::diffuse_transmission_texture, pbr_bindings::diffuse_transmission_sampler, coords, bias.ddx_uv, bias.ddy_uv).a;
+            @if(BINDLESS && !MESHLET_MESH_MATERIAL_PASS)
+            diffuse_transmission *= textureSampleBias(bindless_textures_2d[material_indices[slot].diffuse_transmission_texture], bindless_samplers_filtering[material_indices[slot].diffuse_transmission_sampler], coords, bias.mip_bias).a;
+            @if(!BINDLESS && !MESHLET_MESH_MATERIAL_PASS)
+            diffuse_transmission *= textureSampleBias(pbr_bindings::diffuse_transmission_texture, pbr_bindings::diffuse_transmission_sampler, coords, bias.mip_bias).a;
         }
         pbr_input.material.diffuse_transmission = diffuse_transmission;
 
@@ -517,22 +473,18 @@ pbr_input.material.uv_transform = uv_transform;
         var specular_occlusion: f32 = 1.0;
 @if(VERTEX_UVS)
         if ((flags & pbr_types::STANDARD_MATERIAL_FLAGS_OCCLUSION_TEXTURE_BIT) != 0u) {
-            @if(BINDLESS)
-            let texture = bindless_textures_2d[material_indices[slot].occlusion_texture];
-            @else
-            let texture = pbr_bindings::occlusion_texture;
-            @if(BINDLESS)
-            let sampler_ = bindless_samplers_filtering[material_indices[slot].occlusion_sampler];
-            @else
-            let sampler_ = pbr_bindings::occlusion_sampler;
             @if(STANDARD_MATERIAL_OCCLUSION_UV_B)
             let coords = uv_b;
             @else
             let coords = uv;
-            @if(MESHLET_MESH_MATERIAL_PASS)
-            diffuse_occlusion *= textureSampleGrad(texture, sampler_, coords, bias.ddx_uv, bias.ddy_uv).r;
-            @else
-            diffuse_occlusion *= textureSampleBias(texture, sampler_, coords, bias.mip_bias).r;
+            @if(BINDLESS && MESHLET_MESH_MATERIAL_PASS)
+            diffuse_occlusion *= textureSampleGrad(bindless_textures_2d[material_indices[slot].occlusion_texture], bindless_samplers_filtering[material_indices[slot].occlusion_sampler], coords, bias.ddx_uv, bias.ddy_uv).r;
+            @if(!BINDLESS && MESHLET_MESH_MATERIAL_PASS)
+            diffuse_occlusion *= textureSampleGrad(pbr_bindings::occlusion_texture, pbr_bindings::occlusion_sampler, coords, bias.ddx_uv, bias.ddy_uv).r;
+            @if(BINDLESS && !MESHLET_MESH_MATERIAL_PASS)
+            diffuse_occlusion *= textureSampleBias(bindless_textures_2d[material_indices[slot].occlusion_texture], bindless_samplers_filtering[material_indices[slot].occlusion_sampler], coords, bias.mip_bias).r;
+            @if(!BINDLESS && !MESHLET_MESH_MATERIAL_PASS)
+            diffuse_occlusion *= textureSampleBias(pbr_bindings::occlusion_texture, pbr_bindings::occlusion_sampler, coords, bias.mip_bias).r;
         }
 @if(SCREEN_SPACE_AMBIENT_OCCLUSION) {
         let ssao_tex_pos = vec2<i32>(in.position.xy - view.viewport.xy);
@@ -558,22 +510,18 @@ pbr_input.material.uv_transform = uv_transform;
 
 @if(VERTEX_UVS && VERTEX_TANGENTS && STANDARD_MATERIAL_NORMAL_MAP) {
 
-        @if(BINDLESS)
-        let texture = bindless_textures_2d[material_indices[slot].normal_map_texture];
-        @else
-        let texture = pbr_bindings::normal_map_texture;
-        @if(BINDLESS)
-        let sampler_ = bindless_samplers_filtering[material_indices[slot].normal_map_sampler];
-        @else
-        let sampler_ = pbr_bindings::normal_map_sampler;
         @if(STANDARD_MATERIAL_NORMAL_MAP_UV_B)
         let coords = uv_b;
         @else
         let coords = uv;
-        @if(MESHLET_MESH_MATERIAL_PASS)
-        let Nt = textureSampleGrad(texture, sampler_, coords, bias.ddx_uv, bias.ddy_uv).rgb;
-        @else
-        let Nt = textureSampleBias(texture, sampler_, coords, bias.mip_bias).rgb;
+        @if(BINDLESS && MESHLET_MESH_MATERIAL_PASS)
+        let Nt = textureSampleGrad(bindless_textures_2d[material_indices[slot].normal_map_texture], bindless_samplers_filtering[material_indices[slot].normal_map_sampler], coords, bias.ddx_uv, bias.ddy_uv).rgb;
+        @if(!BINDLESS && MESHLET_MESH_MATERIAL_PASS)
+        let Nt = textureSampleGrad(pbr_bindings::normal_map_texture, pbr_bindings::normal_map_sampler, coords, bias.ddx_uv, bias.ddy_uv).rgb;
+        @if(BINDLESS && !MESHLET_MESH_MATERIAL_PASS)
+        let Nt = textureSampleBias(bindless_textures_2d[material_indices[slot].normal_map_texture], bindless_samplers_filtering[material_indices[slot].normal_map_sampler], coords, bias.mip_bias).rgb;
+        @if(!BINDLESS && !MESHLET_MESH_MATERIAL_PASS)
+        let Nt = textureSampleBias(pbr_bindings::normal_map_texture, pbr_bindings::normal_map_sampler, coords, bias.mip_bias).rgb;
 
         pbr_input.N = pbr_functions::apply_normal_mapping(
             flags,
@@ -593,22 +541,18 @@ pbr_input.material.uv_transform = uv_transform;
 
 @if(STANDARD_MATERIAL_CLEARCOAT_NORMAL_MAP) {
 
-        @if(BINDLESS)
-        let clearcoat_texture = bindless_textures_2d[material_indices[slot].clearcoat_normal_texture];
-        @else
-        let clearcoat_texture = pbr_bindings::clearcoat_normal_texture;
-        @if(BINDLESS)
-        let clearcoat_sampler = bindless_samplers_filtering[material_indices[slot].clearcoat_normal_sampler];
-        @else
-        let clearcoat_sampler = pbr_bindings::clearcoat_normal_sampler;
         @if(STANDARD_MATERIAL_CLEARCOAT_NORMAL_UV_B)
         let clearcoat_coords = uv_b;
         @else
         let clearcoat_coords = uv;
-        @if(MESHLET_MESH_MATERIAL_PASS)
-        let clearcoat_Nt = textureSampleGrad(clearcoat_texture, clearcoat_sampler, clearcoat_coords, bias.ddx_uv, bias.ddy_uv).rgb;
-        @else
-        let clearcoat_Nt = textureSampleBias(clearcoat_texture, clearcoat_sampler, clearcoat_coords, bias.mip_bias).rgb;
+        @if(BINDLESS && MESHLET_MESH_MATERIAL_PASS)
+        let clearcoat_Nt = textureSampleGrad(bindless_textures_2d[material_indices[slot].clearcoat_normal_texture], bindless_samplers_filtering[material_indices[slot].clearcoat_normal_sampler], clearcoat_coords, bias.ddx_uv, bias.ddy_uv).rgb;
+        @if(!BINDLESS && MESHLET_MESH_MATERIAL_PASS)
+        let clearcoat_Nt = textureSampleGrad(pbr_bindings::clearcoat_normal_texture, pbr_bindings::clearcoat_normal_sampler, clearcoat_coords, bias.ddx_uv, bias.ddy_uv).rgb;
+        @if(BINDLESS && !MESHLET_MESH_MATERIAL_PASS)
+        let clearcoat_Nt = textureSampleBias(bindless_textures_2d[material_indices[slot].clearcoat_normal_texture], bindless_samplers_filtering[material_indices[slot].clearcoat_normal_sampler], clearcoat_coords, bias.mip_bias).rgb;
+        @if(!BINDLESS && !MESHLET_MESH_MATERIAL_PASS)
+        let clearcoat_Nt = textureSampleBias(pbr_bindings::clearcoat_normal_texture, pbr_bindings::clearcoat_normal_sampler, clearcoat_coords, bias.mip_bias).rgb;
 
         pbr_input.clearcoat_N = pbr_functions::apply_normal_mapping(
             flags,
@@ -641,22 +585,18 @@ pbr_input.material.uv_transform = uv_transform;
 
         // Adjust based on the anisotropy map if there is one.
         if ((flags & pbr_types::STANDARD_MATERIAL_FLAGS_ANISOTROPY_TEXTURE_BIT) != 0u) {
-            @if(BINDLESS)
-            let texture = bindless_textures_2d[material_indices[slot].anisotropy_texture];
-            @else
-            let texture = pbr_bindings::anisotropy_texture;
-            @if(BINDLESS)
-            let sampler_ = bindless_samplers_filtering[material_indices[slot].anisotropy_sampler];
-            @else
-            let sampler_ = pbr_bindings::anisotropy_sampler;
             @if(STANDARD_MATERIAL_ANISOTROPY_UV_B)
             let coords = uv_b;
             @else
             let coords = uv;
-            @if(MESHLET_MESH_MATERIAL_PASS)
-            let anisotropy_texel = textureSampleGrad(texture, sampler_, coords, bias.ddx_uv, bias.ddy_uv).rgb;
-            @else
-            let anisotropy_texel = textureSampleBias(texture, sampler_, coords, bias.mip_bias).rgb;
+            @if(BINDLESS && MESHLET_MESH_MATERIAL_PASS)
+            let anisotropy_texel = textureSampleGrad(bindless_textures_2d[material_indices[slot].anisotropy_texture], bindless_samplers_filtering[material_indices[slot].anisotropy_sampler], coords, bias.ddx_uv, bias.ddy_uv).rgb;
+            @if(!BINDLESS && MESHLET_MESH_MATERIAL_PASS)
+            let anisotropy_texel = textureSampleGrad(pbr_bindings::anisotropy_texture, pbr_bindings::anisotropy_sampler, coords, bias.ddx_uv, bias.ddy_uv).rgb;
+            @if(BINDLESS && !MESHLET_MESH_MATERIAL_PASS)
+            let anisotropy_texel = textureSampleBias(bindless_textures_2d[material_indices[slot].anisotropy_texture], bindless_samplers_filtering[material_indices[slot].anisotropy_sampler], coords, bias.mip_bias).rgb;
+            @if(!BINDLESS && !MESHLET_MESH_MATERIAL_PASS)
+            let anisotropy_texel = textureSampleBias(pbr_bindings::anisotropy_texture, pbr_bindings::anisotropy_sampler, coords, bias.mip_bias).rgb;
 
             let anisotropy_direction_from_texture = normalize(anisotropy_texel.rg * 2.0 - 1.0);
             // Rotate by the anisotropy direction.
