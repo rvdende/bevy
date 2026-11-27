@@ -154,13 +154,16 @@ pub fn ui_picking(
     // for all nodes encountered that are no longer hovered.
     // Reverse the iterator to traverse the tree from closest slice to furthest
     for uinodes in ui_stack.partitions().rev() {
-        // Retrieve the first node and resolve its camera target.
+        // Resolve the slice's camera target from its first node that has one.
         // Only need to do this once per slice, as all the nodes in the same slice share the same camera.
-        let Ok(uinode) = node_query.get(uinodes[0]) else {
-            continue;
-        };
-
-        let Some(camera_entity) = uinode.target_camera.get() else {
+        // The stack was built when the UI was last laid out: a node despawned since then, or one
+        // that hasn't been given its camera yet, must not hide the rest of its slice.
+        let Some(camera_entity) = uinodes.iter().find_map(|&entity| {
+            node_query
+                .get(entity)
+                .ok()
+                .and_then(|uinode| uinode.target_camera.get())
+        }) else {
             continue;
         };
 
