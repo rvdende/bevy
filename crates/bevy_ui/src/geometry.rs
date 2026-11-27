@@ -752,13 +752,16 @@ impl CornerRadius {
                 radius
                     .resolve(context, size.min_element())
                     .unwrap_or(0.)
-                    .clamp(0., 0.5 * size.min_element()),
+                    // A node can be laid out with a negative size (a stretched flex child
+                    // whose margins exceed its zero-sized parent, as in a minimized window);
+                    // `f32::clamp` panics when its upper bound is below the lower one.
+                    .clamp(0., (0.5 * size.min_element()).max(0.)),
             ),
             Self { x, y } => Vec2::new(
                 x.resolve(context, size.x).unwrap_or(0.),
                 y.resolve(context, size.y).unwrap_or(0.),
             )
-            .clamp(Vec2::ZERO, 0.5 * size),
+            .clamp(Vec2::ZERO, (0.5 * size).max(Vec2::ZERO)),
         }
     }
 }
@@ -806,7 +809,7 @@ impl PartialEq for CornerRadius {
 mod tests {
     use crate::geometry::*;
     use crate::val::Val;
-    use bevy_math::vec2;
+    use bevy_math::{vec2, Vec2};
     use bevy_text::{EmSize, RemSize};
 
     #[test]
@@ -843,6 +846,29 @@ mod tests {
             CornerRadius::default().resolve(&context, size),
             vec2(0., 0.)
         );
+    }
+
+    #[test]
+    fn corner_radius_resolve_with_degenerate_size() {
+        // A node laid out with a negative size (e.g. a stretched flex child whose margins
+        // exceed its zero-sized parent) resolves to square corners instead of panicking.
+        let context = ValContext::new(1., vec2(0., 0.), EmSize(20.0), RemSize(20.0));
+        let circular = CornerRadius {
+            x: Val::Px(10.),
+            y: Val::Auto,
+        };
+        let elliptical = CornerRadius {
+            x: Val::Px(10.),
+            y: Val::Px(10.),
+        };
+        for size in [vec2(-20., 50.), vec2(50., -20.), vec2(-20., -20.)] {
+            assert_eq!(circular.resolve(&context, size), Vec2::ZERO);
+            let radii = elliptical.resolve(&context, size);
+            assert_eq!(radii, vec2(10., 10.).min(0.5 * size.max(Vec2::ZERO)));
+        }
+        // NaN sizes don't panic either.
+        circular.resolve(&context, vec2(f32::NAN, f32::NAN));
+        elliptical.resolve(&context, vec2(f32::NAN, f32::NAN));
     }
 
     #[test]
